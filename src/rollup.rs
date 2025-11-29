@@ -1,7 +1,8 @@
 use nomt::hasher::BinaryHasher;
 use nomt::trie::KeyPath;
 use nomt::{KeyReadWrite, Nomt, Options, Overlay, SessionParams, WitnessMode};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{Rng, SeedableRng};
+use rand_pcg::Pcg64;
 use sha2::{Digest, digest};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -160,7 +161,7 @@ pub struct RollupNode {
     _storage_receiver: tokio::sync::watch::Receiver<NomtSessionBuilder<sha2::Sha256>>,
     data_receiver: std::sync::mpsc::Receiver<Vec<(KeyPath, KeyReadWrite)>>,
     finalization_probability: u8,
-    rng: StdRng,
+    rng: Pcg64,
 }
 
 impl RollupNode {
@@ -190,7 +191,7 @@ impl RollupNode {
         }
 
         for _ in 0..fast_sequencers {
-            let sequencer_rng = StdRng::seed_from_u64(rng_seed);
+            let sequencer_rng = Pcg64::seed_from_u64(rng_seed);
             rng_seed += 1;
             SequencerTask::spawn(
                 storage_receiver.clone(),
@@ -200,7 +201,7 @@ impl RollupNode {
             );
         }
         for _ in 0..sleepy_sequencers {
-            let sequencer_rng = StdRng::seed_from_u64(rng_seed);
+            let sequencer_rng = Pcg64::seed_from_u64(rng_seed);
             rng_seed += 1;
             SequencerTask::spawn(
                 storage_receiver.clone(),
@@ -216,7 +217,7 @@ impl RollupNode {
             _storage_receiver: storage_receiver,
             data_receiver,
             finalization_probability,
-            rng: StdRng::seed_from_u64(rng_seed),
+            rng: Pcg64::seed_from_u64(rng_seed),
         }
     }
 
@@ -297,7 +298,7 @@ pub struct SequencerTask {
     storage_receiver: tokio::sync::watch::Receiver<NomtSessionBuilder<sha2::Sha256>>,
     data_sender: std::sync::mpsc::Sender<Vec<(KeyPath, KeyReadWrite)>>,
     with_strategic_sleeps: bool,
-    rng: StdRng,
+    rng: Pcg64,
 }
 
 impl SequencerTask {
@@ -305,7 +306,7 @@ impl SequencerTask {
         storage_receiver: tokio::sync::watch::Receiver<NomtSessionBuilder<sha2::Sha256>>,
         data_sender: std::sync::mpsc::Sender<Vec<(KeyPath, KeyReadWrite)>>,
         with_strategic_sleeps: bool,
-        rng: StdRng,
+        rng: Pcg64,
     ) {
         let task = Self {
             storage_receiver,
