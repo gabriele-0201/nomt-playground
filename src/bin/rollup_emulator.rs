@@ -25,6 +25,9 @@ struct Args {
     /// Number of simulation runs
     #[arg(long, default_value = "1")]
     simulation_runs: usize,
+    /// Seed for deterministic RNG
+    #[arg(long, default_value = "0")]
+    seed: u64,
 }
 
 #[tokio::main]
@@ -48,6 +51,7 @@ async fn main() {
             args.fast_sequencers,
             args.sleepy_sequencers,
             args.finalization_probability,
+            args.seed,
         );
         node.run(args.number_of_blocks);
         tracing::info!(run, "Rollup emulator run finished");
