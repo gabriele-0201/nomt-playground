@@ -2,17 +2,20 @@
 
 # Script for finding a minimum repro.
 
+cargo build --release
+
 N=$(od -An -N4 -tu4 < /dev/urandom)
 while true; do
     echo "Testing N=$N"
     RUST_BACKTRACE=1 RUST_LOG=info \
         ./target/release/rollup_emulator \
-        --number-of-blocks=20 \
-        --fast-sequencers=1 \
-        --sleepy-sequencers=0 \
+        --number-of-blocks=500 \
+        --fast-sequencers=5 \
+        --sleepy-sequencers=2 \
         --storage-path=/tmp \
         --seed $N
 
+        
     status=$?
     if [ $status -ne 0 ]; then
         echo "❌ Failed at N=$N (exit code $status)"
