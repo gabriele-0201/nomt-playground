@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Script for finding a minimum repro.
-
-cargo build --release
-
 N=$(od -An -N4 -tu4 < /dev/urandom)
 while true; do
     echo "Testing N=$N"
